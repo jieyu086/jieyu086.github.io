@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全事件分布可视化平台</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/light/main.css">
+    <style>
+        body, html {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+            font-family: Arial, sans-serif;
+        }
+
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100% - 100px);
+        }
+
+        #viewDiv {
+            flex: 3;
+            height: 100%;
+        }
+
+        .basemap-gallery {
+            flex: 1;
+            padding: 10px;
+            background-color: #f5f5f5;
+            overflow-y: auto;
+        }
+
+        #basemapGalleryDiv {
+            height: 100%;
+        }
+
+        .esri-ui-top-right {
+            top: 120px !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- 页眉区域 -->
+    <header class="header">
+        <h1>安全事件分布可视化平台</h1>
+        <p>基于GeoScene Maps SDK for JavaScript 4.32构建</p>
+    </header>
+
+    <!-- 主内容区域 -->
+    <div class="container">
+        <!-- 地图区域 -->
+        <div id="viewDiv"></div>
+
+        <!-- 底图库区域 -->
+        <div class="basemap-gallery">
+            <h2>底图库</h2>
+            <div id="basemapGalleryDiv"></div>
+        </div>
+    </div>
+
+    <!-- 加载ArcGIS JS API -->
+    <script src="https://js.arcgis.com/4.28/"></script>
+    <script>
+        require([
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/widgets/ScaleBar",
+            "esri/widgets/Legend",
+            "esri/widgets/Search",
+            "esri/widgets/LayerList",
+            "esri/widgets/BasemapGallery",
+            "esri/layers/FeatureLayer",
+            "esri/Basemap",
+            "esri/widgets/Expand"
+        ], function(
+            Map, MapView, ScaleBar, Legend, Search, LayerList, BasemapGallery, FeatureLayer, Basemap, Expand
+        ) {
+            // 创建地图
+            const map = new Map({
+                basemap: "streets-navigation-vector"
+            });
+
+            // 添加专题图层 - 世界城市人口
+            const citiesLayer = new FeatureLayer({
+                url: "https://www.geosceneonline.cn/server/rest/services/Hosted/incidents086/FeatureServer/0",
+                title: "安全事件分布图层"
+            });
+            map.add(citiesLayer);
+
+            // 创建视图
+            const view = new MapView({
+                container: "viewDiv",
+                map: map,
+                center: [-98.58, 39.82], // 美国坐标
+                zoom: 3
+            });
+
+            // 添加比例尺
+            const scaleBar = new ScaleBar({
+                view: view,
+                unit: "metric"
+            });
+            view.ui.add(scaleBar, {
+                position: "bottom-left"
+            });
+
+            // 添加图例
+            const legend = new Legend({
+                view: view
+            });
+            view.ui.add(legend, "top-right");
+
+            // 添加搜索框
+            const search = new Search({
+                view: view
+            });
+            view.ui.add(search, {
+                position: "top-left",
+                index: 0
+            });
+
+            // 添加图层列表
+            const layerList = new LayerList({
+                view: view
+            });
+            view.ui.add(layerList, {
+                position: "top-right",
+                index: 1
+            });
+
+            // 添加底图库 - 确保在视图加载完成后初始化
+            view.when(function() {
+                const basemapGallery = new BasemapGallery({
+                    view: view,
+                    container: document.getElementById("basemapGalleryDiv")
+                });
+                
+                // 可选：展开底图库默认显示
+                const bgExpand = new Expand({
+                    view: view,
+                    content: basemapGallery,
+                    expandIconClass: "esri-icon-basemap",
+                    expandTooltip: "底图库"
+                });
+                view.ui.add(bgExpand, "top-right");
+            });
+
+            // 当视图加载完成后
+            view.when(() => {
+                console.log("地图加载完成");
+            });
+        });
+    </script>
+</body>
+</html>
